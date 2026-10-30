@@ -1,71 +1,137 @@
-const board = document.getElementById('board');
-const squares = document.querySelectorAll('.square');
-const message = document.getElementById('message');
-const restartBtn = document.getElementById('restart');
+const canvas = document.getElementById("gameBoard");
+const ctx = canvas.getContext("2d");
 
-let currentPlayer = 'X';
+// Game board size
+const boxSize = 20;
+const canvasSize = 400;
+
+// Game Stats
 let gameOver = false;
-const winningCombos = [
-  [0, 1, 2],
-  [3, 4, 5],
-  [6, 7, 8],
-  [0, 3, 6],
-  [1, 4, 7],
-  [2, 5, 8],
-  [0, 4, 8],
-  [2, 4, 6]
-];
+let score = 0;
 
-function handleClick(e) {
-  const square = e.target;
-  const squareIndex = Array.from(squares).indexOf(square);
+const scoreEl = document.getElementById("score");
+const highScoreEl = document.getElementById("highScore");
 
-  if (square.textContent || gameOver) {
-    return;
-  }
+let highScore = localStorage.getItem("highScore") || 0;
+highScoreEl.textContent = highScore;
 
-  square.textContent = currentPlayer;
 
-  if (checkWin()) {
-    message.textContent = `${currentPlayer} wins!`;
-    gameOver = true;
-    return;
-  }
+// Snake Stats
+let snake =  [{x: 150, y:150}];
+let dir = "RIGHT";
 
-  if (checkDraw()) {
-    message.textContent = "It's a draw!";
-    gameOver = true;
-    return;
-  }
 
-  currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+
+// Controls
+
+function controls(e) {
+  const key = e.keyCode;
+  if (key === 37 && dir !==  "RIGHT") dir = "LEFT";
+  else if (key === 38 && dir !== "DOWN") dir = "UP";
+  else if (key === 39 && dir !== "LEFT") dir= "RIGHT";
+  else if (key === 40 && dir !== "UP") dir = "DOWN";
 }
 
-function checkWin() {
-  return winningCombos.some(combo => {
-    return combo.every(index => {
-      return squares[index].textContent === currentPlayer;
+// Movement
+
+function move() {
+  let head = {...snake[0]};
+ 
+  if (dir === "RIGHT") head.x += boxSize;
+  else if (dir === "LEFT") head.x -= boxSize;
+  else if (dir === "UP") head.y += boxSize;
+  else if (dir === "DOWN") head.y -= boxSize;
+
+  snake.unshift(head);
+}
+
+// draw
+function draw() {
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+    // Draw food
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, boxSize, boxSize); // change to new after
+
+    // Draw snake
+    ctx.fillStyle = "lime";
+    snake.forEach((segment) => {
+        ctx.fillRect(segment.x, segment.y, boxSize, boxSize);
     });
-  });
+    move();
+    eatFood();
+    collision();
 }
 
-function checkDraw() {
-  return Array.from(squares).every(square => {
-    return square.textContent;
-  });
+function generateFood(){
+      return {
+        x: Math.floor(Math.random() * (canvasSize / boxSize)) * boxSize,
+        y: Math.floor(Math.random() * (canvasSize / boxSize)) * boxSize,
+    };
 }
+
+function eatFood(){
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        scoreEl.textContent = score;
+        food = generateFood();
+    } else {
+        snake.pop();
+    }
+}
+
+
+function collision(){
+      if (
+        head.x < 0 ||
+        head.y < 0 ||
+        head.x >= canvasSize ||
+        head.y >= canvasSize ||
+        snake.some((segment) => segment.x === head.x && segment.y === head.y)
+    ) {
+        gameOver();
+        return;
+    }
+}
+
+function gameOver() {
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem("highScore", highScore);
+    }
+
+    alert("Game Over! Your score: " + score);
+    location.reload();
+}
+
+
 
 function resetGame() {
-  squares.forEach(square => {
-    square.textContent = '';
-  });
-  message.textContent = '';
-  currentPlayer = 'X';
+
+ let snake =  [{x: 150, y:150}];
+let dir = "RIGHT";
+score = 0;
   gameOver = false;
 }
 
-squares.forEach(square => {
-  square.addEventListener('click', handleClick);
-});
+setInterval(draw,200);
+
+document.addEventListener("keydown", controls);
 
 restartBtn.addEventListener('click', resetGame);
+
+
+/**
+ *  Idea for Game
+ * 
+ * Snake Size addition 
+ * Class of Snake 
+ *  - Size
+ *  - Position (update position of each piece)
+ *  - Part to Location (Head | Tail)
+ *  - Collision (Self or Wall) / Food or Nothing 
+ * 
+ * 
+ * 
+ * 
+ */
