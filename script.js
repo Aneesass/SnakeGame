@@ -28,6 +28,9 @@ highScoreEl.textContent = highScore;
 
 function controls(e) {
   const k = e.key;
+  if (e.keyCode === 38 || e.keyCode === 40) {
+    e.preventDefault();
+  }
   if (k === "ArrowLeft" && dir !== "RIGHT") nextDir = "LEFT";
   else if (k === "ArrowUp" && dir !== "DOWN") nextDir = "UP";
   else if (k === "ArrowRight" && dir !== "LEFT") nextDir = "RIGHT";
